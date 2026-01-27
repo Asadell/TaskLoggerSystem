@@ -5,6 +5,7 @@ using NATS.Client.JetStream;
 using Spectre.Console;
 using TaskLogger.Core.Models;
 using TaskLogger.Infrastructure.Messaging;
+using TaskStatus = TaskLogger.Core.Models.TaskStatus;
 
 namespace TaskLogger.Worker;
 
@@ -29,7 +30,7 @@ public class TaskWorker
         AnsiConsole.MarkupLine($"[green]Worker {_workerId} started[/]");
 
         var options = PullSubscribeOptions.Builder()
-            .WithDurable($"worker-{_workerId}")
+            .WithStream("TASKS")
             .Build();
 
         var subscription = _nats.JetStream.PullSubscribe("tasks.pending", options);
@@ -51,7 +52,7 @@ public class TaskWorker
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+                AnsiConsole.MarkupLine($"[red]Error: {ex.Message.EscapeMarkup()}[/]");
             }
 
             await Task.Delay(100, _cts.Token);
@@ -69,10 +70,10 @@ public class TaskWorker
             return;
         }
 
-        AnsiConsole.MarkupLine($"[yellow]Processing task: {task.Name} (ID: {task.Id})[/]");
+        AnsiConsole.MarkupLine($"[yellow]Processing task: {task.Name.EscapeMarkup()} (ID: {task.Id.EscapeMarkup()})[/]");
 
         // Update status to Running
-        await _publisher.PublishStatusAsync(new TaskStatus
+        _publisher.PublishStatus(new TaskStatus
         {
             TaskId = task.Id,
             State = TaskState.Running,
@@ -86,7 +87,7 @@ public class TaskWorker
             await ExecuteTaskAsync(task);
 
             // Mark as completed
-            await _publisher.PublishStatusAsync(new TaskStatus
+            _publisher.PublishStatus(new TaskStatus
             {
                 TaskId = task.Id,
                 State = TaskState.Completed,
@@ -95,11 +96,11 @@ public class TaskWorker
             });
 
             msg.Ack();
-            AnsiConsole.MarkupLine($"[green]✓ Task completed: {task.Name}[/]");
+            AnsiConsole.MarkupLine($"[green]✓ Task completed: {task.Name.EscapeMarkup()}[/]");
         }
         catch (Exception ex)
         {
-            await _publisher.PublishStatusAsync(new TaskStatus
+            _publisher.PublishStatus(new TaskStatus
             {
                 TaskId = task.Id,
                 State = TaskState.Failed,
@@ -109,7 +110,7 @@ public class TaskWorker
             });
 
             msg.Nak();
-            AnsiConsole.MarkupLine($"[red]✗ Task failed: {task.Name} - {ex.Message}[/]");
+            AnsiConsole.MarkupLine($"[red]✗ Task failed: {task.Name.EscapeMarkup()} - {ex.Message.EscapeMarkup()}[/]");
         }
     }
 

@@ -3,6 +3,7 @@ using System.Text.Json;
 using NATS.Client;
 using NATS.Client.JetStream;
 using TaskLogger.Core.Models;
+using TaskStatus = TaskLogger.Core.Models.TaskStatus;
 
 namespace TaskLogger.Infrastructure.Messaging;
 
@@ -10,7 +11,7 @@ public interface ITaskPublisher
 {
     Task<string> PublishTaskAsync(TaskPayload task);
     Task PublishLogAsync(TaskLog log);
-    Task PublishStatusAsync(TaskStatus status);
+    void PublishStatus(TaskStatus status);
 }
 
 public class TaskPublisher : ITaskPublisher
@@ -41,7 +42,7 @@ public class TaskPublisher : ITaskPublisher
         await _nats.JetStream.PublishAsync($"logs.{log.TaskId}", data);
     }
 
-    public async Task PublishStatusAsync(TaskStatus status)
+    public void PublishStatus(TaskStatus status)
     {
         var json = JsonSerializer.Serialize(status);
         var data = Encoding.UTF8.GetBytes(json);

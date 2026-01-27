@@ -1,4 +1,5 @@
 using NATS.Client;
+using NATS.Client.Internals;
 using NATS.Client.JetStream;
 
 namespace TaskLogger.Infrastructure.Messaging;
@@ -58,7 +59,7 @@ public class NatsConnection : INatsConnection
                 .WithSubjects("logs.>")
                 .WithStorageType(StorageType.File)
                 .WithRetentionPolicy(RetentionPolicy.Limits)
-                .WithMaxAge(TimeSpan.FromDays(7))
+                .WithMaxAge(Duration.OfDays(7))
                 .Build();
             
             _jsm.AddStream(logStreamConfig);

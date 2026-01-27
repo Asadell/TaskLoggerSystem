@@ -24,5 +24,5 @@ try
 }
 catch (Exception ex)
 {
-    AnsiConsole.MarkupLine($"[red]Fatal error: {ex.Message}[/]");
+    AnsiConsole.MarkupLine($"[red]Fatal error: {ex.Message.EscapeMarkup()}[/]");
 }

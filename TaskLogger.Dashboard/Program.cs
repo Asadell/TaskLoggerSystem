@@ -1,10 +1,12 @@
 ﻿using System.Text;
 using System.Text.Json;
 using NATS.Client;
+using NATS.Client.JetStream;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using TaskLogger.Core.Models;
 using TaskLogger.Infrastructure.Messaging;
+using TaskStatus = TaskLogger.Core.Models.TaskStatus;
 
 AnsiConsole.Write(
     new FigletText("Task Dashboard")
